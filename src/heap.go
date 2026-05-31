@@ -7,6 +7,9 @@ type Heap struct {
     roots    []*Object
     nextID   int
     maxObjs  int
+    allocations int
+    objectsFreed int
+    collections int
 }
 
 func NewHeap(maxObjs int) *Heap {
@@ -26,6 +29,7 @@ func (h *Heap) Alloc() *Object {
     obj := newObject(h.nextID)
     h.nextID++
     h.objects = append(h.objects, obj)
+    h.allocations++
     return obj
 }
 
@@ -43,6 +47,7 @@ func (h *Heap) RemoveRoot(obj *Object) {
 }
 
 func (h *Heap) Collect() {
+    h.collections++
     h.mark()
     h.sweep()
 }
@@ -70,15 +75,15 @@ func (h *Heap) sweep() {
             obj.marked = false
             live = append(live, obj)
         } else {
-            fmt.Printf("[GC] swept object %d\n", obj.id)
+            h.objectsFreed++
         }
     }
     h.objects = live
 }
 
 func (h *Heap) Stats() {
-    fmt.Printf("heap: %d objects live\n", len(h.objects))
-    for _, obj := range h.objects {
-        fmt.Printf("  obj#%d refs=%d\n", obj.id, len(obj.refs))
-    }
+    fmt.Printf("Live Objects: %d\n", len(h.objects))
+    fmt.Printf("Allocations: %d\n", h.allocations)
+    fmt.Printf("Collections: %d\n", h.collections)
+    fmt.Printf("Objects Freed: %d\n", h.objectsFreed)
 }
